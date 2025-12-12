@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customise your report layout and content </title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-size: 13px;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f8f8;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .container {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+        flex-shrink: 0;
+      }
+
+      .header h1 {
+        font-size: 15px;
+        margin: 0;
+      }
+
+      .download-buttons button {
+        background-color: transparent;
+        border: 1px solid #007bff;
+        color: #007bff;
+        padding: 8px 15px;
+        margin-left: 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      .report-details {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .report-details div {
+        margin-right: 25px;
+      }
+
+      .value {
+        font-weight: bold;
+        padding: 5px 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        color: #333;
+      }
+
+      .blue-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .show-settings {
+        font-size: 12px;
+        color: #007bff;
+        text-decoration: none;
+        cursor: pointer;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+
+      .tab-nav {
+        display: flex;
+        border-bottom: 2px solid #ddd;
+        margin-bottom: 20px;
+        flex-shrink: 0;
+      }
+
+      .tab-nav a {
+        text-decoration: none;
+        color: #555;
+        padding: 10px 15px;
+        margin-right: 1px;
+        font-size: 14px;
+      }
+
+      .tab-nav a.active {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+        font-weight: bold;
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+        padding-bottom: 20px;
+        flex-grow: 1;
+        overflow-y: hidden;
+      }
+
+      .chart-panel {
+        background-color: white;
+        border: 1px solid #ddd;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .chart-header {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .chart-container {
+        position: relative;
+        width: 100%;
+        flex-grow: 1;
+        min-height: 0;
+      }
+
+      #liquidityChart {
+        max-height: 100%;
+        height: 100%;
+      }
+
+      .settings-panel {
+        background-color: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .settings-tabs {
+        display: flex;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+      }
+
+      .settings-tabs button {
+        background: none;
+        border: none;
+        padding: 8px 15px;
+        cursor: pointer;
+        color: #555;
+        font-weight: 500;
+        font-size: 13px;
+      }
+
+      .settings-tabs button.active {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+      }
+
+      .setting-content-pane {
+        overflow-y: hidden;
+        flex-grow: 1;
+        padding: 0 10px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .setting-content-pane.hidden {
+        display: none;
+      }
+
+      .setting-row {
+        margin-bottom: 5px;
+        padding: 5px 0;
+      }
+
+      .setting-label {
+        font-weight: bold;
+        margin-bottom: 3px;
+        display: block;
+        font-size: 12px;
+      }
+
+      .series-details-container {
+        padding: 10px 0;
+        overflow-y: auto;
+        flex-grow: 1;
+        min-height: 0;
+      }
+
+      .series-details-container.hidden {
+        display: none;
+      }
+
+      .series-details-container h3 {
+        font-size: 13px;
+        color: #007bff;
+        margin: 0 0 8px 0;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+      }
+
+      .series-details-container .series-row-full {
+        grid-column: 1 / -1;
+        margin-bottom: 8px;
+      }
+
+      .series-details-container .display-options label {
+        font-weight: normal;
+        margin-right: 10px;
+        display: inline-flex;
+        align-items: center;
+        font-size: 11px;
+      }
+
+      .title-colour-row {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 8px;
+      }
+
+      .title-colour-row .input-container {
+        flex-grow: 1;
+        margin-right: 8px;
+      }
+
+      .title-colour-row .colour-box {
+        width: 30px;
+        height: 28px;
+        background-color: #1976d2;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+
+      .series-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .formula-link {
+        font-size: 11px;
+        color: #007bff;
+        text-decoration: none;
+        display: block;
+        margin-top: 3px;
+      }
+
+      .dropdown {
+        width: 100%;
+        padding: 5px;
+        font-size: 12px;
+        background-position: right 6px center;
+        padding-right: 20px;
+      }
+
+      .input-text {
+        width: 100%;
+        padding: 5px;
+        font-size: 12px;
+      }
+
+      .narration-box {
+        border: 1px solid #ccc;
+        height: 40px;
+        border-radius: 4px;
+        background-color: #f7f7f7;
+        padding: 10px;
+        margin-top: 5px;
+        font-size: 12px;
+      }
+
+      .other-tab-content {
+        padding: 15px;
+        margin-top: 5px;
+        font-size: 12px;
+      }
+
+      .settings-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 10px;
+        border-top: 1px solid #eee;
+        margin: auto -10px 0 -10px;
+        background-color: #f7f7f7;
+        flex-shrink: 0;
+      }
+
+      .settings-actions .blue-button {
+        margin-left: 10px;
+        font-size: 12px;
+        padding: 5px 10px;
+      }
+
+      .settings-actions .reset-button {
+        background-color: white;
+        color: #555;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Customise your report layout and content</h1>
+        <div class="download-buttons">
+          <button>Download Excel</button>
+          <button>Download PDF</button>
+        </div>
+      </div>
+
+      <div class="report-details">
+        <div>Report Date <span class="value">31 October 2025</span></div>
+        <div>Template <span class="value">ebs AED</span></div>
+        <button class="blue-button">Add Page</button>
+        <a href="#" class="show-settings">Show colour settings</a>
+      </div>
+
+      <div class="tab-nav">
+        <a href="#">All Pages</a>
+        <a href="#">8. Balance Sheet Analysis</a>
+        <a href="#" class="active">Liquidity Monitor</a>
+      </div>
+
+      <div class="main-content">
+        <div class="chart-panel">
+          <div class="chart-header">LIQUIDITY MONITOR</div>
+          <div class="chart-container">
+            <canvas id="liquidityChart"></canvas>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <div class="settings-tabs" id="settingsTabs">
+            <button class="tab-button" data-tab="charts">Charts</button>
+            <button class="tab-button" data-tab="filters">Filters</button>
+            <button class="tab-button active" data-tab="series">Series</button>
+            <button class="tab-button" data-tab="formulas">Formulas</button>
+          </div>
+
+          <div class="setting-content-pane hidden" id="content-charts">
+            <div class="setting-row">
+              <label for="title" class="setting-label">Title</label>
+              <select id="title" class="dropdown">
+                <option>Title</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="xaxis" class="setting-label">X Axis</label>
+              <select id="xaxis" class="dropdown">
+                <option>X Axis</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="yaxis" class="setting-label">Y Axis</label>
+              <select id="yaxis" class="dropdown">
+                <option>Y Axis</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="narration" class="setting-label">Narration</label>
+              <select id="narration" class="dropdown">
+                <option>Narration</option>
+              </select>
+              <div class="narration-box"></div>
+            </div>
+          </div>
+
+          <div class="setting-content-pane hidden" id="content-filters">
+            <div class="setting-row">
+              <label for="filter-dept" class="setting-label"
+                >Filter by Department</label
+              >
+              <select id="filter-dept" class="dropdown">
+                <option>All Departments</option>
+                <option>Finance</option>
+                <option>Operations</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="filter-region" class="setting-label"
+                >Filter by Region</label
+              >
+              <select id="filter-region" class="dropdown">
+                <option>Global</option>
+                <option>MENA</option>
+                <option>Europe</option>
+              </select>
+            </div>
+            <div class="other-tab-content">
+              This panel shows options to limit the data set.
+            </div>
+          </div>
+
+          <div class="setting-content-pane" id="content-series">
+            <div class="series-details-container" id="series-details-liquidity">
+              <h3>Liquidity</h3>
+
+              <div class="series-row-full">
+                <label class="setting-label">Display Options</label>
+                <div class="display-options">
+                  <label><input type="checkbox" checked /> Show Series</label>
+                  <label><input type="checkbox" /> Projection</label>
+                  <label><input type="checkbox" /> Stacked</label>
+                  <label><input type="checkbox" /> Trend</label>
+                </div>
+              </div>
+
+              <div class="title-colour-row">
+                <div class="input-container">
+                  <input
+                    type="text"
+                    id="series-title"
+                    class="input-text"
+                    value="Liquidity"
+                  />
+                </div>
+                <div class="colour-container">
+                  <div
+                    class="colour-box"
+                    style="background-color: #1976d2"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="series-grid">
+                <div class="setting-row">
+                  <label for="series-type" class="setting-label">Type</label>
+                  <select id="series-type" class="dropdown">
+                    <option selected>Curve</option>
+                    <option>Line</option>
+                    <option>Bar</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <label for="series-marker" class="setting-label"
+                    >Marker</label
+                  >
+                  <select id="series-marker" class="dropdown">
+                    <option selected>Dot</option>
+                    <option>None</option>
+                    <option>Square</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <label for="series-data-label" class="setting-label"
+                    >Data Label Options</label
+                  >
+                  <select id="series-data-label" class="dropdown">
+                    <option selected>Number</option>
+                    <option>Percentage</option>
+                    <option>None</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <label for="series-font-size" class="setting-label"
+                    >Data Label Font Size</label
+                  >
+                  <select id="series-font-size" class="dropdown">
+                    <option>9pt</option>
+                    <option selected>10pt</option>
+                    <option>12pt</option>
+                  </select>
+                </div>
+              </div>
+              <!-- <label>Formula</label> -->
+              <div class="series-row-full">
+                <a href="#" class="formula-link">Show formula</a>
+              </div>
+            </div>
+
+            <div
+              class="series-details-container hidden"
+              id="series-details-interest-payable"
+            >
+              <h3>Interest Payable Details</h3>
+              <div class="other-tab-content">
+                Settings for Interest Payable would go here.
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-content-pane hidden" id="content-formulas">
+            <div class="setting-row">
+              <label for="formula-input" class="setting-label"
+                >Add Calculated Field</label
+              >
+              <input
+                type="text"
+                id="formula-input"
+                class="dropdown"
+                placeholder="e.g., (A - B) / A"
+              />
+            </div>
+            <div class="other-tab-content">
+              This panel shows options to define new data metrics like Ratios or
+              Growth rates.
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button class="blue-button reset-button" id="reset-button">
+              Reset
+            </button>
+            <button class="blue-button" id="update-button">Update</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+ 
+      const DEFAULT_SERIES_SETTINGS = {
+        type: "Curve",
+        marker: "Dot",
+        dataLabel: "Number",
+        fontSize: "10pt",
+        title: "Liquidity",
+        color: "#1976D2", 
+      };
+
+      function initChart() {
+        const ctx = document.getElementById("liquidityChart");
+
+        Chart.register(ChartDataLabels);
+
+        if (window.liquidityChartInstance) {
+          window.liquidityChartInstance.destroy();
+        }
+
+        const data = {
+          labels: [
+            "JAN",
+            "FEB",
+            "MAR",
+            "APR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AUG",
+            "SEP",
+            "OCT",
+          ],
+          datasets: [
+            {
+              label: "Dirham (000)",
+              data: [27, -150, 478, 309, 232, -50, -10, 6, 453, 564],
+              borderColor: DEFAULT_SERIES_SETTINGS.color,
+              backgroundColor: "transparent",
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: DEFAULT_SERIES_SETTINGS.color,
+              pointBorderColor: "#fff",
+              pointHoverRadius: 5,
+              pointStyle: "circle",
+              tension: 0.4,
+              fill: false,
+              showLine: true,
+            },
+          ],
+        };
+
+        const config = {
+          type: "line",
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: null,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return context.parsed.y !== null
+                      ? "Dirham (000): " + context.parsed.y
+                      : "";
+                  },
+                },
+              },
+              datalabels: {
+                display: true, 
+                align: "center",
+                anchor: "center",
+                offset: 0,
+                color: "#333",
+                font: {
+                  weight: "normal",
+                  size: 10, 
+                },
+                formatter: function (value, context) {
+                  return value;
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { size: 10 } },
+              },
+              y: {
+                title: {
+                  display: false,
+                },
+                beginAtZero: false,
+                ticks: {
+                  font: { size: 10 },
+                  callback: function (value, index, ticks) {
+                    if (value >= 0) {
+                      return value;
+                    }
+                    return "";
+                  },
+                  color: function (context) {
+                    return context.tick.value === 0
+                      ? "#000"
+                      : "rgba(0, 0, 0, 0.6)";
+                  },
+                },
+                grid: {
+                  color: (context) => {
+                    return context.tick.value === 0
+                      ? "#999"
+                      : "rgba(0, 0, 0, 0.1)";
+                  },
+                  lineWidth: (context) => {
+                    return context.tick.value === 0 ? 1.5 : 0.5;
+                  },
+                  drawBorder: true,
+                },
+              },
+            },
+          },
+        };
+
+        window.liquidityChartInstance = new Chart(ctx, config);
+      }
+
+     
+      function applySeriesSettings() {
+    
+
+        const type = document.getElementById("series-type").value;
+        const dataLabel = document.getElementById("series-data-label").value;
+        const fontSize = document.getElementById("series-font-size").value;
+        const marker = document.getElementById("series-marker").value;
+        const title = document.getElementById("series-title").value;
+        const color =
+          document.querySelector(".colour-box").style.backgroundColor ||
+          DEFAULT_SERIES_SETTINGS.color;
+
+    
+        updateDataLabelOptions(dataLabel, false);
+        updateDataLabelFontSize(fontSize, false);
+        updateMarkerStyle(marker, false);
+        updateChartSeriesColor(color, false);
+
+        if (window.liquidityChartInstance) {
+          window.liquidityChartInstance.data.datasets[0].label = title;
+          window.liquidityChartInstance.update();
+        }
+      }
+
+      function resetSeriesSettings() {
+        document.getElementById("series-type").value =
+          DEFAULT_SERIES_SETTINGS.type;
+        document.getElementById("series-marker").value =
+          DEFAULT_SERIES_SETTINGS.marker;
+        document.getElementById("series-data-label").value =
+          DEFAULT_SERIES_SETTINGS.dataLabel;
+        document.getElementById("series-font-size").value =
+          DEFAULT_SERIES_SETTINGS.fontSize;
+        document.getElementById("series-title").value =
+          DEFAULT_SERIES_SETTINGS.title;
+
+        document.querySelector(".colour-box").style.backgroundColor =
+          DEFAULT_SERIES_SETTINGS.color;
+
+        applySeriesSettings();
+      }
+
+      function updateChartSeriesType(newType, doUpdate = true) {
+        if (window.liquidityChartInstance) {
+          let chartJsType;
+          const dataset = window.liquidityChartInstance.data.datasets[0];
+          const currentColor = dataset.borderColor;
+
+          switch (newType) {
+            case "Curve":
+            case "Line":
+              chartJsType = "line";
+              dataset.tension = newType === "Curve" ? 0.4 : 0;
+              dataset.fill = false;
+              dataset.backgroundColor = "transparent";
+              break;
+            case "Bar":
+              chartJsType = "bar";
+              dataset.tension = 0;
+              dataset.fill = true;
+              dataset.backgroundColor = currentColor;
+              break;
+            default:
+              chartJsType = "line";
+              dataset.tension = 0.4;
+              dataset.fill = false;
+              dataset.backgroundColor = "transparent";
+              break;
+          }
+
+          window.liquidityChartInstance.config.type = chartJsType;
+          if (doUpdate) window.liquidityChartInstance.update();
+        }
+      }
+
+      function updateChartSeriesColor(newColor, doUpdate = true) {
+        if (window.liquidityChartInstance) {
+          const dataset = window.liquidityChartInstance.data.datasets[0];
+          const currentType = window.liquidityChartInstance.config.type;
+
+          dataset.borderColor = newColor;
+          dataset.pointBackgroundColor = newColor;
+
+          if (currentType === "bar") {
+            dataset.backgroundColor = newColor;
+          } else {
+            dataset.backgroundColor = "transparent";
+          }
+
+          const colorBox = document.querySelector(".colour-box");
+          if (colorBox) {
+            colorBox.style.backgroundColor = newColor;
+          }
+          if (doUpdate) window.liquidityChartInstance.update();
+        }
+      }
+
+      function updateDataLabelOptions(selectedOption, doUpdate = true) {
+        if (window.liquidityChartInstance) {
+          const datalabels =
+            window.liquidityChartInstance.options.plugins.datalabels;
+
+          switch (selectedOption) {
+            case "Number":
+              datalabels.display = true;
+              datalabels.formatter = (value) => value;
+              break;
+            case "Percentage":
+              datalabels.display = true;
+              datalabels.formatter = (value) => `${value}%`;
+              break;
+            case "None":
+              datalabels.display = false;
+              break;
+          }
+          if (doUpdate) window.liquidityChartInstance.update();
+        }
+      }
+
+      function updateDataLabelFontSize(selectedSize, doUpdate = true) {
+        if (window.liquidityChartInstance) {
+          const fontSize = parseInt(selectedSize.replace("pt", ""));
+          window.liquidityChartInstance.options.plugins.datalabels.font.size =
+            fontSize;
+          if (doUpdate) window.liquidityChartInstance.update();
+        }
+      }
+
+      function updateMarkerStyle(selectedMarker, doUpdate = true) {
+        if (window.liquidityChartInstance) {
+          const dataset = window.liquidityChartInstance.data.datasets[0];
+          let newStyle;
+          let newRadius;
+
+          switch (selectedMarker) {
+            case "Dot":
+              newStyle = "circle";
+              newRadius = 3;
+              break;
+            case "Square":
+              newStyle = "rect";
+              newRadius = 3;
+              break;
+            case "None":
+              newStyle = false;
+              newRadius = 0;
+              break;
+            default:
+              newStyle = "circle";
+              newRadius = 3;
+              break;
+          }
+
+          dataset.pointStyle = newStyle;
+          dataset.pointRadius = newRadius;
+          dataset.pointHoverRadius = newRadius > 0 ? 5 : 0;
+
+          if (doUpdate) window.liquidityChartInstance.update();
+        }
+      }
+
+      function setupInteraction() {
+        const tabsContainer = document.getElementById("settingsTabs");
+        const tabButtons = tabsContainer.querySelectorAll(".tab-button");
+        const contentPanes = document.querySelectorAll(".setting-content-pane");
+        const colorBox = document.querySelector(".colour-box");
+
+        document.getElementById("content-charts").classList.add("hidden");
+        document.getElementById("content-series").classList.remove("hidden");
+        document
+          .getElementById("series-details-liquidity")
+          .classList.remove("hidden");
+        document
+          .getElementById("series-details-interest-payable")
+          .classList.add("hidden");
+
+        tabsContainer.addEventListener("click", (event) => {
+          if (event.target.classList.contains("tab-button")) {
+            const targetTab = event.target.getAttribute("data-tab");
+
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            contentPanes.forEach((pane) => pane.classList.add("hidden"));
+
+            event.target.classList.add("active");
+
+            const contentPaneToShow = document.getElementById(
+              `content-${targetTab}`
+            );
+            if (contentPaneToShow) {
+              contentPaneToShow.classList.remove("hidden");
+            }
+          }
+        });
+
+        document
+          .getElementById("series-type")
+          .addEventListener("change", (e) =>
+            updateChartSeriesType(e.target.value)
+          );
+        document
+          .getElementById("series-marker")
+          .addEventListener("change", (e) => updateMarkerStyle(e.target.value));
+        document
+          .getElementById("series-data-label")
+          .addEventListener("change", (e) =>
+            updateDataLabelOptions(e.target.value)
+          );
+        document
+          .getElementById("series-font-size")
+          .addEventListener("change", (e) =>
+            updateDataLabelFontSize(e.target.value)
+          );
+        colorBox.addEventListener("click", function () {
+          const currentBoxColor = colorBox.style.backgroundColor.toUpperCase();
+          let newColor;
+
+          if (
+            currentBoxColor === "RGB(25, 118, 210)" ||
+            currentBoxColor === "#1976D2"
+          ) {
+            newColor = "#FF6384"; 
+          } else {
+            newColor = "#1976D2"; 
+          }
+
+          colorBox.style.backgroundColor = newColor;
+
+          updateChartSeriesColor(newColor, true);
+        });
+
+        const updateButton = document.getElementById("update-button");
+        if (updateButton) {
+          updateButton.addEventListener("click", applySeriesSettings);
+        }
+
+        const resetButton = document.getElementById("reset-button");
+        if (resetButton) {
+          resetButton.addEventListener("click", resetSeriesSettings);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        initChart();
+        setupInteraction();
+      });
+    </script>
+  </body>
+</html>

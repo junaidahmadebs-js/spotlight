@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIQUIDITY MONITOR Chart (Pure HTML/CSS/JS)</title>
+    <style>
+        /* --- General Styles --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .chart-container {
+            padding: 30px;
+            background-color: white;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            width: 680px; /* CHART_WIDTH + extra space */
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            margin-left: 40px;
+            text-transform: uppercase;
+        }
+
+        /* --- Chart Area Container --- */
+        .chart-area {
+            position: relative;
+            width: 640px; /* CHART_WIDTH + 40px padding for Y-labels */
+            margin: 0 20px 0 40px;
+        }
+
+        /* --- Y-Axis Labels --- */
+        .y-axis-labels {
+            position: absolute;
+            top: 0;
+            left: -40px;
+            height: 450px; /* CHART_HEIGHT */
+            width: 40px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .y-axis-label-item {
+            position: absolute;
+        }
+
+        /* --- X-Axis Labels (Months) --- */
+        .x-axis-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            width: 600px; /* CHART_WIDTH */
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chart-container">
+        <div class="chart-title">LIQUIDITY MONITOR</div>
+        
+        <div class="chart-area">
+            
+            <div id="y-axis-labels-container" class="y-axis-labels">
+                </div>
+
+            <svg id="liquidity-chart-svg" width="600" height="450" viewBox="0 0 600 450" style="overflow: visible;"></svg>
+
+            <div id="x-axis-labels-container" class="x-axis-labels">
+                </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const data = [
+            { month: 'JAN', value: 27 },
+            { month: 'FEB', value: 784 },
+            { month: 'MAR', value: 478 },
+            { month: 'APR', value: 309 },
+            { month: 'MAY', value: 198 },
+            { month: 'JUN', value: 90 },
+            { month: 'JUL', value: -12 },
+            { month: 'AUG', value: -88 },
+            { month: 'SEP', value: 453 },
+            { month: 'OCT', value: 564 },
+        ];
+
+        // --- CONFIGURATION AND SCALING ---
+        const CHART_WIDTH = 600;
+        const CHART_HEIGHT = 450;
+        const MAX_Y = 800;
+        const MIN_Y = -100;
+        const Y_RANGE = MAX_Y - MIN_Y;
+        
+        // Helper to create SVG elements
+        const SVG_NS = "http://www.w3.org/2000/svg";
+        const createSvgElement = (name, attributes) => {
+            const el = document.createElementNS(SVG_NS, name);
+            for (const key in attributes) {
+                el.setAttribute(key, attributes[key]);
+            }
+            return el;
+        };
+
+        // Function to convert data value to SVG Y-coordinate
+        const getYPos = (value) => {
+            const normalizedValue = (value - MIN_Y) / Y_RANGE;
+            return CHART_HEIGHT - (normalizedValue * CHART_HEIGHT);
+        };
+
+        // Function to convert index to SVG X-coordinate
+        const getXPos = (index) => {
+            return (index / (data.length - 1)) * CHART_WIDTH;
+        };
+
+        const X_AXIS_Y_POS = getYPos(0);
+
+        // Function to generate smooth SVG path (Cubic Bézier Curve)
+        const generatePath = () => {
+            let path = `M ${getXPos(0)} ${getYPos(data[0].value)}`;
+            
+            for (let i = 0; i < data.length - 1; i++) {
+                const x1 = getXPos(i);
+                const y1 = getYPos(data[i].value);
+                const x2 = getXPos(i + 1);
+                const y2 = getYPos(data[i + 1].value);
+
+                // Control points for a smooth curve
+                const ctrlX1 = x1 + (x2 - x1) / 3;
+                const ctrlY1 = y1;
+                const ctrlX2 = x1 + 2 * (x2 - x1) / 3;
+                const ctrlY2 = y2;
+                
+                path += ` C ${ctrlX1} ${ctrlY1}, ${ctrlX2} ${ctrlY2}, ${x2} ${y2}`;
+            }
+            return path;
+        };
+
+        // --- DRAWING FUNCTION ---
+        const drawChart = () => {
+            const svg = document.getElementById('liquidity-chart-svg');
+            const yLabelsContainer = document.getElementById('y-axis-labels-container');
+            const xLabelsContainer = document.getElementById('x-axis-labels-container');
+            const pathData = generatePath();
+            
+            // Clear previous elements
+            svg.innerHTML = '';
+            yLabelsContainer.innerHTML = '';
+            xLabelsContainer.innerHTML = '';
+
+
+            // 1. Draw Grid Lines and Y-Axis Labels
+            const Y_GRID_LINES = [800, 600, 400, 200, 0];
+            Y_GRID_LINES.forEach(val => {
+                const y = getYPos(val);
+                const isZeroLine = val === 0;
+
+                // Draw Grid Line
+                const line = createSvgElement('line', {
+                    x1: 0, 
+                    y1: y, 
+                    x2: CHART_WIDTH, 
+                    y2: y, 
+                    stroke: isZeroLine ? '#ccc' : '#eee', // X-axis is slightly darker
+                    'stroke-width': 1 
+                });
+                svg.appendChild(line);
+
+                // Add Y-Axis Label (HTML Element)
+                const label = document.createElement('div');
+                label.className = 'y-axis-label-item';
+                label.style.top = `${y - 10}px`; // Adjust up by half font size
+                label.textContent = val === 800 ? '800 Dirham (000)' : val;
+                yLabelsContainer.appendChild(label);
+            });
+
+            // 2. Draw the Main Curved Line
+            const path = createSvgElement('path', {
+                d: pathData, 
+                fill: 'none', 
+                stroke: '#4a90e2', 
+                'stroke-width': 2.5 
+            });
+            svg.appendChild(path);
+
+            // 3. Draw Data Points and Value Labels
+            data.forEach((point, index) => {
+                const cx = getXPos(index);
+                const cy = getYPos(point.value);
+                const isNegative = point.value < 0;
+
+                // Draw Circle Data Point
+                const circle = createSvgElement('circle', {
+                    cx: cx, 
+                    cy: cy, 
+                    r: 3, 
+                    fill: '#4a90e2' 
+                });
+                svg.appendChild(circle);
+
+                // Draw Value Label (SVG Text)
+                const text = createSvgElement('text', {
+                    x: cx,
+                    y: cy + (isNegative ? 20 : -10), // Position label below or above
+                    'text-anchor': 'middle',
+                    'font-size': '13px',
+                    'font-weight': 'bold',
+                    fill: '#4a90e2'
+                });
+                text.textContent = point.value;
+                svg.appendChild(text);
+
+                // 4. Add X-Axis Labels (Months)
+                const monthSpan = document.createElement('span');
+                monthSpan.textContent = point.month;
+                xLabelsContainer.appendChild(monthSpan);
+            });
+        };
+
+        // Run the drawing function when the page loads
+        document.addEventListener('DOMContentLoaded', drawChart);
+    </script>
+</body>
+</html>
