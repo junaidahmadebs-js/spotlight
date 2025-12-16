@@ -4,6 +4,7 @@ import LayoutPage from '../components/LayoutPage';
 const Home: NextPage = () => {
   return (
     <LayoutPage />
+
   );
 }
 

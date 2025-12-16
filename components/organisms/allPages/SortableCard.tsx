@@ -5,7 +5,6 @@ import { CSS } from "@dnd-kit/utilities";
 import PageCard from "../../atoms/PageCard"; 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 interface Props {
   id: string;

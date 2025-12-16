@@ -1,6 +1,10 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ReduxProvider } from "@/redux/Provider";
+import Breadcrumb from '@/components/molecules/Breadcrumb'; 
+import ReportHeader from "@/components/molecules/ReportHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,10 +28,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
+      <body 
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ReduxProvider>
+                <ReportHeader />
+
+          <div className="p- md:p- bg-white border-b shadow-sm m-5">
+            <Breadcrumb /> 
+          </div>
+          
+          <main className="p-4 md:p-6">
+            {children}
+          </main>
+          
+        </ReduxProvider>
       </body>
     </html>
   );

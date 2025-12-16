@@ -1,10 +1,7 @@
 "use client";
 
 import SortableCard from "../components/organisms/allPages/SortableCard";
-import ReportHeader from "../components/molecules/ReportHeader";
-
-import React from "react";
-
+// import ReportHeader from "../components/molecules/ReportHeader";
 import { useState } from "react";
 import {
   DndContext,
@@ -16,6 +13,8 @@ import {
 import type { DragEndEvent } from "@dnd-kit/core";
 
 import { arrayMove, SortableContext } from "@dnd-kit/sortable";
+import Page from "./customise/[slug]/page";
+// import Breadcrumb from "@/components/molecules/Breadcrumb";
 
 interface Card {
   id: string;
@@ -71,7 +70,7 @@ export default function Home() {
       title: "Analysis",
       content: "text",
       showCustomize: true,
-      url: "/executive",
+      url: "/analysis",
     },
     {
       id: "6",
@@ -117,12 +116,10 @@ export default function Home() {
 
   return (
     <div className="bg-gray-50 min-h-screen m-5">
-      <ReportHeader />
-
+      {/* <ReportHeader /> */}
+      {/* <Breadcrumb/> */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-4">
-        <div className="text-sm font-semibold text-gray-700 mb-4 bg-gray-200 p-2">
-          All Pages
-        </div>
+       
 
         <DndContext
           sensors={sensors}
@@ -148,6 +145,7 @@ export default function Home() {
             </div>
           </SortableContext>
         </DndContext>
+        <Page/>
       </div>
     
     </div>

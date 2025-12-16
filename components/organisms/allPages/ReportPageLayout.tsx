@@ -308,9 +308,7 @@ const ReportPageLayout = () => {
 
     return (
         <div className="p-8 bg-gray-100 min-h-screen">
-            <div className="mb-8 p-4 bg-white border rounded-lg flex items-center justify-between">
-                <h3 className="text-lg font-medium">All Pages (Drag to Reorder)</h3>
-            </div>
+          
             
             <DndContext 
                 sensors={sensors}
