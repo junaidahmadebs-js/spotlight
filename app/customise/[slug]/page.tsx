@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import CustomisePage from "@/views/pages/index";
+import CustomisePage from "@/views/pages";
 
 export default function Page() {
   const params = useParams();

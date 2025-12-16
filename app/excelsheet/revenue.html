@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Balance Sheet Renderer</title>
+
+    <style>
+      body {
+        font-family: Arial;
+        background: #f3f3f3;
+        padding: 20px;
+        font-size: 10px;
+      }
+
+      .layout {
+        display: flex;
+        align-items: flex-start;
+      }
+
+      .left {
+        width: 70%;
+      }
+
+      .right {
+        width: 30%;
+        display: flex;
+        flex-direction: column;
+      }
+      .right h3 {
+        background-color: #62aff3;
+        display: inline;
+        padding: 4px;
+        text-align: center;
+        margin: 0px;
+      }
+
+      .table-block {
+        background: white;
+        padding: 0px;
+        border: 1px solid black;
+        border-top: 1px;
+        text-align: center;
+      }
+
+      table {
+        width: 100%;
+      }
+
+      th {
+        background: #8a8c90;
+        color: white;
+        padding: 3px;
+        text-align: center;
+        margin-top: 0px;
+      }
+
+      td {
+        padding: 5px;
+        border-bottom: 2px solid #eee;
+        text-align: right;
+      }
+
+      .super-header {
+        background: white !important;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+     
+      }
+     
+      #balanceTable title {
+        background-color: #8a8c90;
+      }
+
+      .now-head {
+        background-color: #8a8c90;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .month-head {
+        background-color: white;
+        color: black;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      td:first-child {
+        text-align: left;
+      }
+
+      .text-red {
+        color: #d9534f;
+      }
+      .text-green {
+        color: #5ea85d;
+      }
+      .text-blue {
+        color: #0275d8;
+      }
+      .border {
+        border: 1px solid red;
+      }
+      .addFlexBox {
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="layout border">
+      <div class="left">
+        <div class="table-block border">
+          <table id="balanceTable" class="border"></table>
+        </div>
+      </div>
+
+      <div class="right">
+        <h3>Monitors</h3>
+
+        <div class="table-block">
+          <table id="Monitors"></table>
+        </div>
+
+        <div class="table-block">
+          <table id="debtTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const balanceSheetData = [
+        { name: "Accounts Receivable", values: [134719, 122580, 80962, 73689] },
+        { name: "Input VAT", values: [621, 0, 2210, 1940] },
+        { name: "Inventory Asset", values: [203, 203, 203, 203] },
+        { name: "Petty Cash", values: [27980, 25421, 11789, 11789] },
+        { name: "Prepaid Expenses", values: [63623, 26547, 29005, 50763] },
+        { name: "Rak Bank", values: [288534, 284648, 124419, 163043] },
+        { name: "Stripe", values: [4133, 88790, 20953, 193] },
+        { name: "Tebby", values: [2197, 8341, 0, 0] },
+        { name: "Undeposited Funds", values: [3193, 3193, 3193, 3193] },
+        { name: "Rounding", values: [127, 8, 5, 5] },
+        { name: "Total Current Assets", values: [525230, 559731, 272739, 304818], },
+        { name: "Accumulated Depreciation - Office Equipment", values: [-257, -214, -171, -129], },
+        { name: "Accumulated Depreciation - Vehicle", values: [-992, 0, 0, 0] },
+        { name: "Office Equipment", values: [2570, 2570, 2570, 2570] },
+        { name: "Vehicle", values: [59550, 58500, 0, 0] },
+        { name: "Total Non-Current Assets", values: [60871, 60856, 2399, 2441],  },
+        { name: "Total Assets", values: [586101, 620587, 275138, 307259] },
+        { name: "Accounts Payable", values: [45234, 51764, 5174, 789] },
+        { name: "Accrued Expenses", values: [5000, 5000, 4000, 9000] },
+        { name: "GCC VAT Payable", values: [120, 16245, 0, 0] },
+        { name: "Opening Balance Adjustments", values: [58877, 58877, 58877, 58877], },
+        { name: "Output VAT", values: [5445, 0, 2559, 396] },
+        { name: "Unearned Revenue", values: [23857, 103348, 31262, 7957] },
+        { name: "Total Current Liabilities", values: [138533, 235234, 101872, 77019],},
+
+        { name: "Total Non-Current Liabilities", values: [0, 0, 0, 0] },
+
+        { name: "Total Liabilities", values: [138533, 235234, 101872, 77019] },
+
+        {
+          name: "Total Liabilities (Final)",
+          values: [447568, 385353, 173266, 230240],
+        },
+      ];
+
+      const capexMonitor = [
+        { name: "Vehicle", values: [59550] },
+        { name: "Office Equipment", values: [2570] },
+        { name: "Total CAPEX", values: [62120] },
+      ];
+
+      const debtMonitor = [
+        { name: "Accounts Payable", values: [45234] },
+        { name: "Taxes", values: [5565] },
+        { name: "Other", values: [87734] },
+        { name: "Total Debt", values: [138533] },
+      ];
+
+      function renderTable(
+        data,
+        tableId,
+        headers = [],
+        superHeaders = [],
+        isbold = true
+      ) {
+        const table = document.getElementById(tableId);
+
+        let headerHTML = "";
+
+        if (superHeaders.length > 0) {
+          headerHTML += "<tr class='super-header border'>";
+          headerHTML += `<th colspan="2";  style="background-color: white;"></th>  `;
+       
+          superHeaders.forEach((sh) => {
+            const cls = sh.title === "Now" ? "now-head" : "month-head";
+            headerHTML += `<th colspan="${sh.colspan}" class="${cls}">${sh.title}</th>`;
+          });
+          headerHTML += "</tr>";
+        }
+
+        headerHTML += "<tr>";
+        if (superHeaders.length === 0) headerHTML += "<th>Name</th>";
+        headers.forEach((h) => (headerHTML += `<th>${h}</th>`));
+        headerHTML += "</tr>";
+
+        table.innerHTML = headerHTML;
+        
+
+
+        data.forEach((row) => {
+          const isTotalRow = row.name.toLowerCase().includes("total");
+
+          const rowStyle = isTotalRow ? 'style="font-weight: bold;"' : "";
+
+          let tr = `<tr><td ${rowStyle}>${row.name}</td>`;
+          row.values.forEach((val) => {
+            let cls =
+              val > 0 ? "text-green" : val < 0 ? "text-red" : "text-blue";
+            tr += `<td class="${cls}" ${rowStyle}>${val.toLocaleString()}</td>`;
+          });
+
+          tr += "</tr>";
+          table.innerHTML += tr;
+        });
+      }
+
+      renderTable(capexMonitor, "Monitors", ["YTD"]);
+      renderTable(debtMonitor, "debtTable", ["As at Sep 25"]);
+
+      renderTable(
+        balanceSheetData,
+        "balanceTable",
+        ["As at Sep 25", "Aug 25", "Jul 25", "Jun 25"],
+        [
+          { title: "Now", colspan: 1 },
+          { title: "Last 3 Months", colspan: 3 },
+        ]
+      );
+    </script>
+  </body>
+</html>
